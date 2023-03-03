@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">FaceDetectionDemo</string>
+    <string name="upload_photo_straight_face">For optimal results; please upload a photograph with a straight face</string>
+    <string name="switch_camera">Switch Camera</string>
 </resources>
