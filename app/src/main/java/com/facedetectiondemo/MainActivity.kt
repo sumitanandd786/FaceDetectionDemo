@@ -34,7 +34,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onClicks() {
-        btnSwitch.setOnClickListener {
+        ImgSwitch.setOnClickListener {
             cameraManager.changeCameraSelector()
         }
     }

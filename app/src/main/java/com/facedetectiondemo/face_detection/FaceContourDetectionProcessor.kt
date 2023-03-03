@@ -6,9 +6,7 @@ import com.facedetectiondemo.camerax.BaseImageAnalyzer
 import com.facedetectiondemo.camerax.GraphicOverlay
 import com.google.android.gms.tasks.Task
 import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.face.Face
-import com.google.mlkit.vision.face.FaceDetection
-import com.google.mlkit.vision.face.FaceDetectorOptions
+import com.google.mlkit.vision.face.*
 import java.io.IOException
 
 class FaceContourDetectionProcessor(private val view: GraphicOverlay) :
@@ -16,7 +14,8 @@ class FaceContourDetectionProcessor(private val view: GraphicOverlay) :
 
     private val realTimeOpts = FaceDetectorOptions.Builder()
         .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
-        .setContourMode(FaceDetectorOptions.CONTOUR_MODE_NONE)
+        .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
+        .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
         .build()
 
     private val detector = FaceDetection.getClient(realTimeOpts)
@@ -46,6 +45,7 @@ class FaceContourDetectionProcessor(private val view: GraphicOverlay) :
             val faceGraphic = FaceContourGraphic(graphicOverlay, it, rect)
             graphicOverlay.add(faceGraphic)
         }
+
         graphicOverlay.postInvalidate()
     }
 

@@ -2,15 +2,15 @@ package com.facedetectiondemo.camerax
 
 import android.content.Context
 import android.util.Log
-import androidx.camera.core.Camera
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.Preview
+import android.widget.Toast
+import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.facedetectiondemo.face_detection.FaceContourDetectionProcessor
+import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -29,7 +29,7 @@ class CameraManager(
     private var cameraProvider: ProcessCameraProvider? = null
 
     private var imageAnalyzer: ImageAnalysis? = null
-
+    private var imageCapture: ImageCapture? = null
 
     init {
         createNewExecutor()
@@ -74,16 +74,24 @@ class CameraManager(
     ) {
         try {
             cameraProvider?.unbindAll()
+
+            //takePhoto()
+            /*imageCapture = camera?.let {
+                ImageCapture.Builder()
+                    .setFlashMode(ImageCapture.FLASH_MODE_ON)
+                    .setTargetAspectRatio(AspectRatio.RATIO_16_9) // width:height
+                    .build()
+            }*/
             camera = cameraProvider?.bindToLifecycle(
                 lifecycleOwner,
                 cameraSelector,
-                preview,
+                preview,//imageCapture
                 imageAnalyzer
             )
             preview?.setSurfaceProvider(
                 finderView.surfaceProvider
-                //finderView.createSurfaceProvider()
             )
+
         } catch (e: Exception) {
             Log.e(TAG, "Use case binding failed", e)
         }
@@ -96,6 +104,35 @@ class CameraManager(
             else CameraSelector.LENS_FACING_BACK
         graphicOverlay.toggleSelector()
         startCamera()
+    }
+
+    private fun takePhoto() {
+        var photoFile =
+            File(context.externalMediaDirs.firstOrNull(),"CapturePro-${System.currentTimeMillis()}.jpg")
+        var imageOptions: ImageCapture.OutputFileOptions = ImageCapture.OutputFileOptions.Builder(
+            photoFile
+        ).build()
+        imageCapture?.takePicture(
+            imageOptions,
+            ContextCompat.getMainExecutor(context),
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                    Toast.makeText(
+                        context,
+                        "Image Saved ${outputFileResults.savedUri} at ${context.externalCacheDir!!.absolutePath}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    Log.d("TAG", "onImageSaved:  ${context.externalCacheDir!!.absolutePath}")
+                }
+
+                override fun onError(exception: ImageCaptureException) {
+                    Toast.makeText(
+                        context,
+                        "Failed: ${exception.message} and ${exception.localizedMessage}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            })
     }
 
     companion object {

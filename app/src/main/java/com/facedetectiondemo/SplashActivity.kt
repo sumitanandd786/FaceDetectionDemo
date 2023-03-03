@@ -19,7 +19,7 @@ class SplashActivity : AppCompatActivity() {
         initData()
     }
 
-    fun initData() {
+    private fun initData() {
         pbSplash.visibility = View.VISIBLE
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             window.insetsController?.hide(WindowInsets.Type.statusBars())

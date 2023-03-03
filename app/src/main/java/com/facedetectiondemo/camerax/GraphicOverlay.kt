@@ -91,7 +91,6 @@ open class GraphicOverlay(context: Context?, attrs: AttributeSet?) :
 
     fun add(graphic: Graphic) {
         synchronized(lock) { graphics.add(graphic) }
-        postInvalidate()
     }
 
     fun remove(graphic: Graphic) {
