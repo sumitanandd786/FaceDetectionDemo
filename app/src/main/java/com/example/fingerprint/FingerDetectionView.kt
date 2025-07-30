@@ -16,6 +16,7 @@ import androidx.camera.core.AspectRatio
 import androidx.core.graphics.drawable.toBitmap
 import kotlin.math.max
 import kotlin.math.min
+import java.nio.ByteBuffer
 
 /**
  * A drop-in TextureView that streams camera preview via Camera2, draws an oval overlay indicating
@@ -56,6 +57,9 @@ class FingerDetectionView @JvmOverloads constructor(
 
         /** Segmentation mask rendered as alpha-only bitmap the same size as preview. */
         fun onSegmentationMask(mask: Bitmap) {}
+
+        /** Ambient light category of the current frame (LOW/NORMAL/HIGH). */
+        fun onLightLevel(level: LightLevel) {}
     }
 
     var listener: Listener? = null
@@ -69,6 +73,14 @@ class FingerDetectionView @JvmOverloads constructor(
 
     /** Laplacian variance threshold below which frame is considered blurred. */
     var blurThreshold = 100f
+
+    /** Y-channel average below this value => LOW light (0-255 scale). */
+    var lowLightThreshold = 50
+
+    /** Y-channel average above this value => HIGH light (0-255 scale). */
+    var highLightThreshold = 180
+
+    private var lastLightLevel: LightLevel? = null
 
     // endregion ----------------------------------------------------------------------------------
 
@@ -229,6 +241,17 @@ class FingerDetectionView @JvmOverloads constructor(
 
     private fun onImageAvailable(reader: ImageReader) {
         val image = reader.acquireLatestImage() ?: return
+
+        // ----- Ambient light detection --------------------------------------------------------
+        val avgLuma = image.averageLuma()
+        val level = categorizeLight(avgLuma)
+        if (level != lastLightLevel) {
+            lastLightLevel = level
+            listener?.onLightLevel(level)
+        }
+
+        // --------------------------------------------------------------------------------------
+
         val bitmap = image.toBitmapAndClose()
 
         val mask = segmentFinger(bitmap) // alpha-only mask or null
@@ -398,6 +421,28 @@ class FingerDetectionView @JvmOverloads constructor(
             }
         }
         return best
+    }
+
+    /** Fast average luma computation over the Y plane (sampled). */
+    private fun Image.averageLuma(sampleStep: Int = 10): Double {
+        val yPlane = planes[0].buffer
+        val size = yPlane.remaining()
+        var sum = 0L
+        var count = 0
+        var i = 0
+        while (i < size) {
+            val v: Int = yPlane.get(i).toInt() and 0xFF
+            sum += v
+            count++
+            i += sampleStep
+        }
+        return if (count == 0) 0.0 else sum.toDouble() / count
+    }
+
+    private fun categorizeLight(avgLuma: Double): LightLevel = when {
+        avgLuma < lowLightThreshold -> LightLevel.LOW
+        avgLuma > highLightThreshold -> LightLevel.HIGH
+        else -> LightLevel.NORMAL
     }
 
     // endregion ----------------------------------------------------------------------------------
