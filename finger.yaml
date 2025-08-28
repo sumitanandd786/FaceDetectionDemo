@@ -1,0 +1,9 @@
+# Finger detection dataset descriptor for YOLOv8
+path: finger_dataset
+train: images/train
+val: images/val
+
+autodownload: false
+
+names:
+  0: finger
